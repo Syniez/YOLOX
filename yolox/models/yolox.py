@@ -6,6 +6,7 @@ import torch.nn as nn
 
 from .yolo_head import YOLOXHead
 from .yolo_pafpn import YOLOPAFPN
+from .yolo_patch import YOLOPATCH
 
 
 class YOLOX(nn.Module):
@@ -22,11 +23,23 @@ class YOLOX(nn.Module):
         if head is None:
             head = YOLOXHead(80)
 
+        ######### change this #########
+        self.use_patch = True
+        self.patch_masking = False
+        self.patch_size = 32
+        self.use_updown = True
+        ###############################
+        
+        if self.use_patch:
+            self.patch = YOLOPATCH(patch_masking=self.patch_masking, patch_size=self.patch_size, use_updown=self.use_updown)
+
         self.backbone = backbone
         self.head = head
 
     def forward(self, x, targets=None):
         # fpn output content features of [dark3, dark4, dark5]
+        if self.use_patch:
+            x = self.patch(x)
         fpn_outs = self.backbone(x)
 
         if self.training:
